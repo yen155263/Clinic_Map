@@ -200,25 +200,6 @@ public class ClinicController {
 			@RequestParam(name = "clinicType")String clinicType, 
 			@RequestParam(name = "clinicStatus")String clinicStatus,HttpServletRequest request) throws IOException {
 
-//			HttpHeaders header=new HttpHeaders();
-//			header.setContentType(MediaType.IMAGE_JPEG);
-//			String clinicPhotoPath = request.getSession().getServletContext().getRealPath("/")+clinicPhotoFile.getOriginalFilename();	
-//			File savefile=new File(clinicPhotoPath);
-//			clinicPhotoFile.transferTo(savefile);
-//			InputStream is1 = new FileInputStream(clinicPhotoPath);
-//			byte[] clinicPhoto=new byte[is1.available()];
-//			is1.read(clinicPhoto);
-//			is1.close();
-//
-//			HttpHeaders header1=new HttpHeaders();
-//			header1.setContentType(MediaType.IMAGE_JPEG);
-//			String clinicLicensePath = request.getSession().getServletContext().getRealPath("/")+clinicLicenseFile.getOriginalFilename();	
-//			File savefile1=new File(clinicLicensePath);
-//			clinicLicenseFile.transferTo(savefile1);
-//			InputStream is2 = new FileInputStream(clinicLicensePath);
-//			byte[] clinicLicense=new byte[is2.available()];
-//			is2.read(clinicLicense);
-//			is2.close();
 		byte[] clinicPhoto = clinicPhotoFile.getBytes();
 		System.out.println("test1:"+ clinicPhoto.length);		
 		byte[] clinicLicense = clinicLicenseFile.getBytes();
@@ -256,11 +237,6 @@ public class ClinicController {
 	
 	@RequestMapping(path = "/SaveReport.do", method = RequestMethod.GET)
 	public void saveReport(@RequestParam(name="date")String timeType,HttpServletRequest request){
-//		Map<String,Integer> map = new HashMap<String,Integer>();
-//		map.put("預約人數", 10);
-//		map.put("已診療人數", 7);
-//		map.put("初診人數", 3);
-//		map.put("未報到人數", 3);
 		Cookie[] cookieArray = request.getCookies();
 		Map<String,Cookie> cookieMap = new HashMap<String,Cookie>();
 		for(Cookie cookie:cookieArray) {
