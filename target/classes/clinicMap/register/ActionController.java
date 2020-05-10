@@ -137,7 +137,7 @@ public class ActionController {
 	}
 	
 	@RequestMapping(path = "/verifiedEmail", method = RequestMethod.GET, produces = "text/plain;charset=UTF-8")
-	public @ResponseBody String emailVerified(@RequestParam("code") String code) {
+	public String emailVerified(@RequestParam("code") String code) {
 		
 		//之後再改成 Y/N 啟動成功，丟到不同頁面???
 		Memberde member = mDao.getInfoWithCode(code);
@@ -153,32 +153,35 @@ public class ActionController {
 			//時間內註冊成功
 			if(now-deadLine<=timeLimit) {
 				mDao.setActiveStatus(code);
-				return "Verified Success";
+				return "emailVerifiedSuccess";
 			}
 		}
-		return "verified out of time, please get verified emai again";
+		return "emailVerifiedFailed";
 	}
 	
 	@RequestMapping(path = "forgetPwdPage", method = RequestMethod.POST)
 	public void forgetPwd(@RequestParam("account") String account, @RequestParam("email") String email, HttpServletResponse response) {
-		//產生tempCode 的初始資料
-		String codeData = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*";
-		String tempPwd = ""; //8位數暫時密碼
-		
-		while(tempPwd.length()<8) {
-			tempPwd += codeData.charAt((int)((Math.random()*70)+1));
-		}
-		
-		mDao.setTempPwd(account, tempPwd);
-		sendEmail("forget", email, tempPwd);
-		
-		//下面的兩種方法選一個，否則會無限迴圈寄暫時密碼
 		try {
-			response.getWriter().print("");
-		} catch (IOException e) {
+			if(mDao.doubleCheckInfo(account, email)) {
+				//帳號 和 email屬於同一個人
+
+				//產生tempCode 的初始資料
+				String codeData = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*";
+				String tempPwd = ""; //8位數暫時密碼
+
+				while(tempPwd.length()<8) {
+					tempPwd += codeData.charAt((int)((Math.random()*70)+1));
+				}
+
+				mDao.setTempPwd(account, tempPwd);
+				sendEmail("forget", email, tempPwd);
+				response.getWriter().print(true);
+			}else {
+				response.getWriter().print(false);
+			}
+		}catch(IOException e) {
 			e.printStackTrace();
 		}
-//		return "login";
 	}
 	
 	@RequestMapping(path = "/isAccountExist", method = RequestMethod.POST)
@@ -211,18 +214,19 @@ public class ActionController {
 
 	@RequestMapping(path = "/getEmailAgainPage", method = RequestMethod.POST)
 	public void getEmailAgain(@RequestParam("account") String account, @RequestParam("email") String email, HttpServletResponse response) {
-
-		String codeAgain = uuidCode();
-		mDao.setActiveStatus(codeAgain, account);
-
-		//更改 deadline的時間
-		mDao.updateDeadline(account, new Date().getTime());
-			
-		//重新寄出驗證信的狀況
-		sendEmail("verified", email, codeAgain);
-			
 		try {
-			response.getWriter().print("");
+			if(mDao.doubleCheckInfo(account, email)) {
+				String codeAgain = uuidCode();
+				mDao.setActiveStatus(codeAgain, account);
+
+				//更改 deadline的時間
+				mDao.updateDeadline(account, new Date().getTime());
+				//重新寄出驗證信的狀況
+				sendEmail("verified", email, codeAgain);
+				response.getWriter().print(true);
+			}else {
+				response.getWriter().print(false);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -329,7 +333,7 @@ public class ActionController {
 				  message.setSubject("ClinicMap Account Verified");
 				  content = "<html><head>"
 //				  		+ "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js\"></script>"
-					   		+ "</head><body><a href='http://localhost/clinicMap/verifiedEmail?code=" + code + "'>click to verified</a>"
+					   		+ "</head><body><a href='http://localhost/clinicMap/verifiedEmail?code=" + code + "'>點擊驗證</a>"
 //					   				+ "<script>$(function(){\r\n" + 
 //					   				"            $.get({\r\n" + 
 //					   				"                url:\"../verifiedEmail\",\r\n" + 
@@ -376,5 +380,15 @@ public class ActionController {
 	@RequestMapping(path="/getEmail")
 	public String getVerifiedEmailAgain() {
 		return "getVerifiedEmailAgain";
+	}
+
+	@RequestMapping(path="/emailResultS")
+	public String emailResultSuccess() {
+		return "emailVerifiedSuccess";
+	}
+	
+	@RequestMapping(path="/emailResultF")
+	public String emailResultFailed() {
+		return "emailVerifiedFailed";
 	}
 }
